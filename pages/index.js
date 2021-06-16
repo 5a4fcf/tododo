@@ -58,6 +58,31 @@ const Index = () => {
     setToDoList(updated);
   }
 
+
+  const ToDoListItem = (props) => {
+    return (
+      <li key={props.index}>
+        {props.name}
+        <button onClick = {(e) => {
+          e.preventDefault();
+          handleDelete(props.index);
+        }}>
+          Update
+        </button>
+        <button onClick = {(e) => {
+          e.preventDefault();
+          handleDelete(props.index);
+        }}>
+          Delete
+        </button>
+      </li>
+    )
+  }
+
+  // const ToDoListItemEdit = () => {
+  //   return <li key={props.index}> {props.name} </li>;
+  // }
+
   return (
     <div>
       <h1> Test </h1>
@@ -68,10 +93,7 @@ const Index = () => {
       <ul>
         {
           toDoList.length >=1 ? toDoList.map((todo, index) => {
-            return <li key={index}> {todo} <button onClick = {(e) => {
-              e.preventDefault();
-              handleDelete(index);
-            }}> Delete </button> </li>
+            return <ToDoListItem name={todo} index={index} />
           })
           : 'Enter a todo item'
         }
