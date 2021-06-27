@@ -8,23 +8,22 @@ export default async (req, res) => {
     }
 
     try {
-        const todoList = body;
         if (req.method === 'POST') {
-            const savedToDoList = await prisma.todoItem.create({ data: todoList });
-            res.status(200).json(savedToDoList);
+            const savedItem = await prisma.todoItem.create({ data: body });
+            res.status(200).json(savedItem);
         } else if (req.method === 'DELETE') {
             await prisma.todoItem.delete({
                 where: {
-                    id: todoList.id
+                    id: body.id
                 }
             });
             res.status(200).json({ message: 'Item deleted!' });
         } else if (req.method === 'PUT') {
             await prisma.todoItem.update({
                 where: {
-                    id: todoList.id
+                    id: body.id
                 },
-                data: todoList
+                data: body
             });
             res.status(200).json({ message: 'Item updated!' });
         }

@@ -1,9 +1,8 @@
-import Head from 'next/head'
 import Link from 'next/link'
-import { useRouter } from 'next/router'
 import styles from '../styles/Home.module.css'
 import prisma from '../lib/prisma';
 import { useState } from 'react';
+import { useRouter } from 'next/router'
 
 
 export const getServerSideProps = async () => {
@@ -33,49 +32,64 @@ export const getServerSideProps = async () => {
 
 
 export default function Home({ initialToDoLists }) {
-  console.log(initialToDoLists);
   const [toDoLists, setToDoLists] = useState(initialToDoLists);
   const router = useRouter();
 
-  const createList = async(e) => {
-    e.preventDefault();
+    const createList = async(e) => {
+      e.preventDefault();
 
-    const res = await fetch('/api/list', {
+      const res = await fetch('/api/list', {
+          body: JSON.stringify({
+              title: 'Untitled'
+          }),
+          headers: {
+              'Content-Type': 'application/json'
+          },
+          method: 'POST'
+      });
+
+      const result = await res.json()
+      router.push(`/list/${result.id}`);
+      setToDoLists([...toDoLists, result])
+  }
+
+
+  const deleteList = async(listId) => {
+    let newItems = toDoLists.filter(list => list.id != listId );
+    setToDoLists(newItems);
+
+    await fetch('/api/list', {
         body: JSON.stringify({
-            title: 'Untitled'
+            id: listId
         }),
         headers: {
             'Content-Type': 'application/json'
         },
-        method: 'POST'
-    })
-
-    const result = await res.json()
-    setToDoLists([...toDoLists, result])
-    router.push(`/list/${result.id}`);
-}
+        method: 'DELETE'
+    });
+  }
 
   return (
-    <div className={styles.container}>
-      <Head>
-        <title>ToDoDo</title>
-        <meta name="description" content="A simple to-do list app" />
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-
+    <>
       <main className={styles.main}>
         <h1 className={styles.title}>
-          What do you want to do today?
+          Lists
         </h1>
-
         <section className={styles.section}>
           {toDoLists.map((list) => (
             <Link href={`/list/${list.id}`}>
               <div className={styles.card} key={list.id}>
                 <div>
                   <h2>{list.title}</h2>
-                  <p> {list.items.length} of {list._count.items} done</p>
+                  <p> {list.items?.length} of {list._count?.items} done</p>
                 </div>
+
+                <button onClick = {(e) => {
+                    e.preventDefault();
+                    deleteList(list.id);
+                }}>
+                    Delete
+                </button>
               </div>
             </Link>
           ))}
@@ -86,16 +100,6 @@ export default function Home({ initialToDoLists }) {
           </div>
         </section>
       </main>
-
-      <footer className={styles.footer}>
-        <a
-          href="https://github.com/5a4fcf"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          A project by 5A4FCF
-        </a>
-      </footer>
-    </div>
+    </>
   )
 }

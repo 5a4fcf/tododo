@@ -12,6 +12,18 @@ export default async (req, res) => {
         if (req.method === 'POST') {
             const savedToDoList = await prisma.todoList.create({ data: todoList });
             res.status(200).json(savedToDoList);
+        }  else if (req.method === 'DELETE') {
+            await prisma.todoItem.deleteMany({
+                where: {
+                    todoListId: todoList.id
+                }
+            });
+            await prisma.todoList.delete({
+                where: {
+                    id: todoList.id
+                }
+            });
+            res.status(200).json({ message: 'Item deleted!' });
         } else if (req.method === 'PUT') {
             await prisma.todoList.update({
                 where: {
