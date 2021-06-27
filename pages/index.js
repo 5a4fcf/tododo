@@ -1,105 +1,101 @@
-// import Head from 'next/head'
-// import styles from '../styles/Home.module.css'
-
-// export default function Home() {
-//   return (
-//     <div className={styles.container}>
-//       <Head>
-//         <title>ToDoDo</title>
-//         <meta name="description" content="A simple to-do list app" />
-//         <link rel="icon" href="/favicon.ico" />
-//       </Head>
-
-//       <main className={styles.main}>
-//         <h1 className={styles.title}>
-//           What do you want to do?
-//         </h1>
-
-//         <p className={styles.description}>
-//           Me? I want to create the app that lets you list down your answers to the question.
-//         </p>
-//         <p>
-//           This might take a little while though...  
-//         </p>
-//       </main>
-
-//       <footer className={styles.footer}>
-//         <a
-//           href="https://github.com/5a4fcf"
-//           target="_blank"
-//           rel="noopener noreferrer"
-//         >
-//           A project by 5A4FCF
-//         </a>
-//       </footer>
-//     </div>
-//   )
-// }
+import Head from 'next/head'
+import Link from 'next/link'
+import { useRouter } from 'next/router'
+import styles from '../styles/Home.module.css'
+import prisma from '../lib/prisma';
 import { useState } from 'react';
 
-const Index = () => {
-  const [userInput, setUserInput] = useState('');
-  const [toDoList, setToDoList] = useState([]);
 
-  const handleChange = (e) => {
+export const getServerSideProps = async () => {
+  const toDoLists = await prisma.todoList.findMany({
+    include: {
+      _count: { // all items count
+        select: {
+          items: true
+        },
+      },
+      items: { // done items
+        where: {
+          done: true
+        },
+        select : {
+          id: true
+        }
+      }
+    }
+  });
+  return {
+    props: {
+      initialToDoLists: toDoLists
+    }
+  };
+}
+
+
+export default function Home({ initialToDoLists }) {
+  console.log(initialToDoLists);
+  const [toDoLists, setToDoLists] = useState(initialToDoLists);
+  const router = useRouter();
+
+  const createList = async(e) => {
     e.preventDefault();
-    setUserInput(e.target.value);
-  }
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setToDoList([userInput, ...toDoList]);
-    setUserInput('')
-  }
+    const res = await fetch('/api/list', {
+        body: JSON.stringify({
+            title: 'Untitled'
+        }),
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        method: 'POST'
+    })
 
-  const handleDelete = (index) => {
-    // filter out item to remove
-    let updated = toDoList.filter((item, itemIndex) => itemIndex != index );
-    setToDoList(updated);
-  }
-
-
-  const ToDoListItem = (props) => {
-    return (
-      <li key={props.index}>
-        {props.name}
-        <button onClick = {(e) => {
-          e.preventDefault();
-          handleDelete(props.index);
-        }}>
-          Update
-        </button>
-        <button onClick = {(e) => {
-          e.preventDefault();
-          handleDelete(props.index);
-        }}>
-          Delete
-        </button>
-      </li>
-    )
-  }
-
-  // const ToDoListItemEdit = () => {
-  //   return <li key={props.index}> {props.name} </li>;
-  // }
+    const result = await res.json()
+    setToDoLists([...toDoLists, result])
+    router.push(`/list/${result.id}`);
+}
 
   return (
-    <div>
-      <h1> Test </h1>
-      <form>
-        <input type="text" value={userInput} placeholder="Enter a Todo Item" onChange={handleChange}/>
-        <button onClick={handleSubmit}> Submit </button>
-      </form>
-      <ul>
-        {
-          toDoList.length >=1 ? toDoList.map((todo, index) => {
-            return <ToDoListItem name={todo} index={index} />
-          })
-          : 'Enter a todo item'
-        }
-      </ul>
+    <div className={styles.container}>
+      <Head>
+        <title>ToDoDo</title>
+        <meta name="description" content="A simple to-do list app" />
+        <link rel="icon" href="/favicon.ico" />
+      </Head>
+
+      <main className={styles.main}>
+        <h1 className={styles.title}>
+          What do you want to do today?
+        </h1>
+
+        <section className={styles.section}>
+          {toDoLists.map((list) => (
+            <Link href={`/list/${list.id}`}>
+              <div className={styles.card} key={list.id}>
+                <div>
+                  <h2>{list.title}</h2>
+                  <p> {list.items.length} of {list._count.items} done</p>
+                </div>
+              </div>
+            </Link>
+          ))}
+          <div className={styles.card} onClick={createList}>
+            <div>
+              <h2> + </h2>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer className={styles.footer}>
+        <a
+          href="https://github.com/5a4fcf"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          A project by 5A4FCF
+        </a>
+      </footer>
     </div>
   )
 }
-
-export default Index;
