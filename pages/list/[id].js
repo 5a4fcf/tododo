@@ -119,7 +119,7 @@ export default function List({ title, items, id }) {
             {allItems.map((item) => (
             <div className={item.done ? styles['card-done'] : styles.card} key={item.id}>
                 <div>
-                <h2>{c.content}</h2>
+                <h2>{item.content}</h2>
 
                 <div>
                     <button onClick = {(e) => {
